@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8.0
+    command: ["--event-scheduler=ON", "--default-time-zone=+00:00", "--binlog-format=ROW"]
+    environment:
+      MYSQL_ROOT_PASSWORD: bounty_local_root
+      MYSQL_DATABASE: bountyboard
+    ports: ["127.0.0.1:3308:3306"]
+    volumes: ["mysql_data_v1:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pbounty_local_root"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+  mongo:
+    image: mongo:7
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports: ["127.0.0.1:27019:27017"]
+    volumes: ["mongo_data:/data/db"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status() } catch(e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}) }"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+volumes:
+  mysql_data_v1:
+  mongo_data:
